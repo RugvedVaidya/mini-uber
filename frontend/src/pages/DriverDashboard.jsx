@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { bookingApi, locationApi } from '../api'
+import Navbar from '../components/Navbar'
+import RideMap from '../components/RideMap'
 
 const STATUS_COLORS = {
-  REQUESTED: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-green-100 text-green-800',
+  REQUESTED: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  ACCEPTED: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  IN_PROGRESS: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+  COMPLETED: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
 }
 
 export default function DriverDashboard() {
-  const navigate = useNavigate()
   const [rides, setRides] = useState([])
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,17 +20,17 @@ export default function DriverDashboard() {
 
   useEffect(() => {
     fetchRides()
-    const interval = setInterval(fetchRides, 10000)
+    const interval = setInterval(fetchRides, 5000)
     return () => clearInterval(interval)
   }, [])
 
   const fetchRides = async () => {
     try {
-        const pending = await bookingApi.pendingRides()
-        const mine = await bookingApi.myRides()
-        const allRides = [...pending.data, ...mine.data]
-        const unique = allRides.filter((r, i, a) => a.findIndex(x => x.id === r.id) === i)
-        setRides(unique)
+      const pending = await bookingApi.pendingRides()
+      const mine = await bookingApi.myRides()
+      const all = [...pending.data, ...mine.data]
+      const unique = all.filter((r, i, a) => a.findIndex(x => x.id === r.id) === i)
+      setRides(unique)
     } catch {}
   }
 
@@ -41,7 +41,7 @@ export default function DriverDashboard() {
       setMsg('Ride accepted!')
       fetchRides()
     } catch (err) {
-      setMsg(err.response?.data?.message || 'Failed')
+      setMsg(err.response?.data?.error || 'Failed')
     }
     setLoading(false)
   }
@@ -53,7 +53,7 @@ export default function DriverDashboard() {
       setMsg('Ride started!')
       fetchRides()
     } catch (err) {
-      setMsg(err.response?.data?.message || 'Failed')
+      setMsg(err.response?.data?.error || 'Failed')
     }
     setLoading(false)
   }
@@ -65,7 +65,7 @@ export default function DriverDashboard() {
       setMsg('Ride completed!')
       fetchRides()
     } catch (err) {
-      setMsg(err.response?.data?.message || 'Failed')
+      setMsg(err.response?.data?.error || 'Failed')
     }
     setLoading(false)
   }
@@ -83,84 +83,82 @@ export default function DriverDashboard() {
     }
   }
 
-  const logout = () => {
-    localStorage.clear()
-    navigate('/login')
-  }
-
   const activeRide = rides.find(r => ['ACCEPTED', 'IN_PROGRESS'].includes(r.status))
   const requestedRides = rides.filter(r => r.status === 'REQUESTED')
   const completedRides = rides.filter(r => r.status === 'COMPLETED')
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-slate-800">🚗 MiniUber</span>
-          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">Driver</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500">{email}</span>
-          <button onClick={logout} className="text-sm text-red-500 hover:text-red-700">Logout</button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
+      <Navbar role="DRIVER" />
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
         {msg && (
-          <div className="px-4 py-3 rounded-lg text-sm bg-blue-50 text-blue-700">{msg}</div>
+          <div className="px-4 py-3 rounded-lg text-sm bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+            {msg}
+          </div>
         )}
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-400 mb-1">Pending Rides</div>
-            <div className="text-2xl font-bold text-yellow-600">{requestedRides.length}</div>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-400 mb-1">Active Ride</div>
-            <div className="text-2xl font-bold text-blue-600">{activeRide ? 1 : 0}</div>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-400 mb-1">Completed</div>
-            <div className="text-2xl font-bold text-green-600">{completedRides.length}</div>
-          </div>
+          {[
+            { label: 'Pending Rides', value: requestedRides.length, color: 'text-yellow-600 dark:text-yellow-400' },
+            { label: 'Active Ride', value: activeRide ? 1 : 0, color: 'text-blue-600 dark:text-blue-400' },
+            { label: 'Completed', value: completedRides.length, color: 'text-green-600 dark:text-green-400' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+              <div className="text-xs text-slate-400 mb-1">{label}</div>
+              <div className={`text-2xl font-bold ${color}`}>{value}</div>
+            </div>
+          ))}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-base font-semibold text-slate-800 mb-4">Update My Location</h2>
-          <div className="flex gap-3 items-end">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-white mb-4">Update My Location</h2>
+          <div className="flex gap-3 items-end flex-wrap">
             <div>
               <label className="text-xs text-slate-400 mb-1 block">Latitude</label>
-              <input value={location.lat}
-                onChange={e => setLocation({...location, lat: e.target.value})}
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-slate-400 w-36"
-              />
+              <input value={location.lat} onChange={e => setLocation({...location, lat: e.target.value})}
+                className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-3 py-2 text-sm outline-none w-36" />
             </div>
             <div>
               <label className="text-xs text-slate-400 mb-1 block">Longitude</label>
-              <input value={location.lng}
-                onChange={e => setLocation({...location, lng: e.target.value})}
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-slate-400 w-36"
-              />
+              <input value={location.lng} onChange={e => setLocation({...location, lng: e.target.value})}
+                className="border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-3 py-2 text-sm outline-none w-36" />
             </div>
             <button onClick={updateLocation}
-              className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700">
+              className="bg-slate-800 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700 dark:hover:bg-indigo-700">
               Update Location
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-2">Driver ID: {driverId}</p>
+          <div className="mt-4">
+            <RideMap
+              pickupLat={location.lat} pickupLng={location.lng}
+              dropoffLat={parseFloat(location.lat) + 0.01}
+              dropoffLng={parseFloat(location.lng) + 0.01}
+              pickupAddress="Your Location"
+              dropoffAddress=""
+            />
+          </div>
         </div>
 
         {activeRide && (
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-base font-semibold text-blue-800">Active Ride</h2>
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+            <div className="flex justify-between items-start mb-3">
+              <h2 className="text-base font-semibold text-blue-800 dark:text-blue-300">Active Ride</h2>
               <span className={`text-xs px-3 py-1 rounded-full font-medium ${STATUS_COLORS[activeRide.status]}`}>
                 {activeRide.status}
               </span>
             </div>
-            <div className="text-sm text-blue-700 mb-4">
+            <div className="text-sm text-blue-700 dark:text-blue-400 mb-4">
               {activeRide.pickupAddress} → {activeRide.dropoffAddress}
+            </div>
+            <div className="mb-4">
+              <RideMap
+                pickupLat={activeRide.pickupLat} pickupLng={activeRide.pickupLng}
+                dropoffLat={activeRide.dropoffLat} dropoffLng={activeRide.dropoffLng}
+                pickupAddress={activeRide.pickupAddress} dropoffAddress={activeRide.dropoffAddress}
+              />
             </div>
             <div className="flex gap-2">
               {activeRide.status === 'ACCEPTED' && (
@@ -179,52 +177,59 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-semibold text-slate-800">
+            <h2 className="text-base font-semibold text-slate-800 dark:text-white">
               Pending Requests ({requestedRides.length})
             </h2>
-            <button onClick={fetchRides} className="text-xs text-slate-500 hover:text-slate-700">
-              ↻ Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Auto-refreshing</span>
+            </div>
           </div>
 
           {requestedRides.length === 0 && (
-            <div className="text-center text-slate-400 py-8 text-sm">
-              No pending ride requests
-            </div>
+            <div className="text-center text-slate-400 py-8 text-sm">No pending ride requests</div>
           )}
 
           <div className="space-y-3">
             {requestedRides.map(ride => (
-              <div key={ride.id} className="border border-slate-100 rounded-xl p-4 flex justify-between items-center">
-                <div>
-                  <div className="text-sm font-medium text-slate-700">
-                    {ride.pickupAddress} → {ride.dropoffAddress}
+              <div key={ride.id} className="border border-slate-100 dark:border-slate-700 rounded-xl p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {ride.pickupAddress} → {ride.dropoffAddress}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      {new Date(ride.requestedAt).toLocaleTimeString()}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    {new Date(ride.requestedAt).toLocaleTimeString()}
-                  </div>
+                  <button onClick={() => acceptRide(ride.id)}
+                    disabled={loading || !!activeRide}
+                    className="bg-slate-800 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700 dark:hover:bg-indigo-700 disabled:opacity-40">
+                    Accept
+                  </button>
                 </div>
-                <button onClick={() => acceptRide(ride.id)} disabled={loading || !!activeRide}
-                  className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700 disabled:opacity-40">
-                  Accept
-                </button>
+                <RideMap
+                  pickupLat={ride.pickupLat} pickupLng={ride.pickupLng}
+                  dropoffLat={ride.dropoffLat} dropoffLng={ride.dropoffLng}
+                  pickupAddress={ride.pickupAddress} dropoffAddress={ride.dropoffAddress}
+                />
               </div>
             ))}
           </div>
         </div>
 
         {completedRides.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-semibold text-slate-800 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="text-base font-semibold text-slate-800 dark:text-white mb-4">
               Completed Rides ({completedRides.length})
             </h2>
             <div className="space-y-3">
               {completedRides.map(ride => (
-                <div key={ride.id} className="border border-slate-100 rounded-xl p-4 flex justify-between items-center">
+                <div key={ride.id} className="border border-slate-100 dark:border-slate-700 rounded-xl p-4 flex justify-between items-center">
                   <div>
-                    <div className="text-sm font-medium text-slate-700">
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {ride.pickupAddress} → {ride.dropoffAddress}
                     </div>
                     <div className="text-xs text-slate-400 mt-1">
