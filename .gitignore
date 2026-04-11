@@ -1,0 +1,61 @@
+# Maven build outputs
+*/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Environment & Secrets - NEVER COMMIT
+.env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Sensitive Spring properties
+notification-service/src/main/resources/application-docker.properties
+auth-service/src/main/resources/application-docker.properties
+booking-service/src/main/resources/application-docker.properties
+location-service/src/main/resources/application-docker.properties
+payment-service/src/main/resources/application-docker.properties
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Docker
+.docker/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: api-gateway
+
+server:
+  port: 8080
+
+gateway:
+  auth-url: http://auth-service:8081
+  booking-url: http://booking-service:8082
+  location-url: http://location-service:8083
+  payment-url: http://payment-service:8084
+  notification-url: http://notification-service:8085
