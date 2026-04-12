@@ -59,4 +59,11 @@ public class BookingController {
     public ResponseEntity<List<RideResponse>> getPendingRides() {
         return ResponseEntity.ok(bookingService.getPendingRides());
     }
+
+    @PutMapping("/{rideId}/cancel")
+    public ResponseEntity<RideResponse> cancelRide(
+            @PathVariable UUID rideId,
+            Authentication auth) {
+        return ResponseEntity.ok(bookingService.cancelRide(rideId, auth.getName()));
+    }
 }

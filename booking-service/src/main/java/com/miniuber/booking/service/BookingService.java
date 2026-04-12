@@ -147,4 +147,23 @@ public class BookingService {
         return rideRepository.findByStatus(RideStatus.REQUESTED)
                 .stream().map(this::mapToResponse).toList();
     }
+
+    public RideResponse cancelRide(UUID rideId, String userEmail) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Ride not found"));
+
+        if (ride.getStatus() != RideStatus.REQUESTED && ride.getStatus() != RideStatus.ACCEPTED)
+            throw new RuntimeException("Ride cannot be cancelled at this stage");
+
+        ride.setStatus(RideStatus.CANCELLED);
+        ride = rideRepository.save(ride);
+
+        Map<String, Object> event = new HashMap<>();
+        event.put("rideId", ride.getId().toString());
+        event.put("status", "CANCELLED");
+        kafkaTemplate.send("booking.updated", ride.getId().toString(), event);
+        log.info("Ride cancelled: {}", ride.getId());
+
+        return mapToResponse(ride);
+    }
 }

@@ -7,6 +7,18 @@ const authHeaders = () => ({
   headers: { Authorization: `Bearer ${token()}` }
 })
 
+// Auto logout on token expiry
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.clear()
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const authApi = {
   register: (data) => axios.post(`${GATEWAY}/api/auth/register`, data),
   login: (data) => axios.post(`${GATEWAY}/api/auth/login`, data),
@@ -20,6 +32,7 @@ export const bookingApi = {
   myRides: () => axios.get(`${GATEWAY}/api/rides/my-rides`, authHeaders()),
   getRide: (id) => axios.get(`${GATEWAY}/api/rides/${id}`, authHeaders()),
   pendingRides: () => axios.get(`${GATEWAY}/api/rides/pending`, authHeaders()),
+  cancelRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/cancel`, {}, authHeaders()),
 }
 
 export const paymentApi = {
