@@ -7,7 +7,6 @@ const authHeaders = () => ({
   headers: { Authorization: `Bearer ${token()}` }
 })
 
-// Auto logout on token expiry
 axios.interceptors.response.use(
   response => response,
   error => {
@@ -29,10 +28,10 @@ export const bookingApi = {
   acceptRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/accept`, {}, authHeaders()),
   startRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/start`, {}, authHeaders()),
   completeRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/complete`, {}, authHeaders()),
+  cancelRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/cancel`, {}, authHeaders()),
   myRides: () => axios.get(`${GATEWAY}/api/rides/my-rides`, authHeaders()),
   getRide: (id) => axios.get(`${GATEWAY}/api/rides/${id}`, authHeaders()),
   pendingRides: () => axios.get(`${GATEWAY}/api/rides/pending`, authHeaders()),
-  cancelRide: (id) => axios.put(`${GATEWAY}/api/rides/${id}/cancel`, {}, authHeaders()),
 }
 
 export const paymentApi = {
@@ -44,4 +43,8 @@ export const paymentApi = {
 export const locationApi = {
   update: (data) => axios.post(`${GATEWAY}/api/location/update`, data, authHeaders()),
   getDriver: (driverId) => axios.get(`${GATEWAY}/api/location/driver/${driverId}`, authHeaders()),
+  getNearby: (lat, lng, radius = 5) =>
+    axios.get(`${GATEWAY}/api/location/nearby?lat=${lat}&lng=${lng}&radius=${radius}`, authHeaders()),
+  setAvailable: (driverId, available) =>
+    axios.post(`${GATEWAY}/api/location/driver/${driverId}/available?available=${available}`, {}, authHeaders()),
 }

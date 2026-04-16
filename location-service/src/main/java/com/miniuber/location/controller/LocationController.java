@@ -11,6 +11,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -42,6 +44,25 @@ public class LocationController {
         public ResponseEntity<DriverLocation> getDriverLocation(
                 @PathVariable String driverId) {
             return ResponseEntity.ok(locationService.getDriverLocation(driverId));
+        }
+
+        @GetMapping("/nearby")
+        public ResponseEntity<List<DriverLocation>> getNearbyDrivers(
+                @RequestParam double lat,
+                @RequestParam double lng,
+                @RequestParam(defaultValue = "5.0") double radius) {
+            return ResponseEntity.ok(locationService.getNearbyDrivers(lat, lng, radius));
+        }
+
+        @PostMapping("/driver/{driverId}/available")
+        public ResponseEntity<Map<String, String>> setAvailable(
+                @PathVariable String driverId,
+                @RequestParam boolean available) {
+            locationService.setDriverAvailable(driverId, available);
+            return ResponseEntity.ok(Map.of(
+                "driverId", driverId,
+                "available", String.valueOf(available)
+            ));
         }
     }
 }

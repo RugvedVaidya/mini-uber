@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { bookingApi, paymentApi } from '../api'
+import { bookingApi } from '../api'
 import Navbar from '../components/Navbar'
-import RideMap from '../components/RideMap'
+import LiveMap from '../components/LiveMap'
 import AddressSearch from '../components/AddressSearch'
 import PaymentModal from '../components/PaymentModal'
 
@@ -191,18 +191,28 @@ export default function RiderDashboard() {
                 </div>
               </div>
 
-              <button type="button" onClick={() => setShowMap(!showMap)}
+              <button 
+                type="button" 
+                onClick={() => setShowMap(!showMap)}
                 className="w-full py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-sm text-slate-500 dark:text-slate-400 hover:border-brand-400 hover:text-brand-600 transition-all">
-                {showMap ? '🗺 Hide Map' : '🗺 Preview Route on Map'}
+                {showMap ? '🗺 Hide Map' : '🗺 Preview Route & Nearby Drivers'}
               </button>
 
               {showMap && (
                 <div className="animate-fade-in">
-                  <RideMap
-                    pickupLat={form.pickupLat} pickupLng={form.pickupLng}
-                    dropoffLat={form.dropoffLat} dropoffLng={form.dropoffLng}
-                    pickupAddress={form.pickupAddress} dropoffAddress={form.dropoffAddress}
+                  <LiveMap
+                    pickupLat={form.pickupLat}
+                    pickupLng={form.pickupLng}
+                    dropoffLat={form.dropoffLat}
+                    dropoffLng={form.dropoffLng}
+                    pickupAddress={form.pickupAddress}
+                    dropoffAddress={form.dropoffAddress}
+                    showNearby={true}
+                    height="280px"
                   />
+                  <p className="text-xs text-center text-slate-400 mt-2">
+                    🟢 Green cars are available drivers near you
+                  </p>
                 </div>
               )}
 
@@ -314,19 +324,26 @@ export default function RiderDashboard() {
 
 function RideCard({ ride, payment, onCancel, onPay }) {
   const status = STATUS_CONFIG[ride.status] || STATUS_CONFIG.REQUESTED
+  const [driverId, setDriverId] = useState(ride.driverId)
+
+  useEffect(() => {
+    setDriverId(ride.driverId)
+  }, [ride.driverId])
+
+  const isActive = ['ACCEPTED', 'IN_PROGRESS'].includes(ride.status)
 
   return (
     <div className="card p-5 animate-slide-up">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-brand-500"></div>
+            <div className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0"></div>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
               {ride.pickupAddress}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
               {ride.dropoffAddress}
             </span>
@@ -337,32 +354,35 @@ function RideCard({ ride, payment, onCancel, onPay }) {
         </span>
       </div>
 
-      {(ride.status === 'ACCEPTED' || ride.status === 'IN_PROGRESS') && (
-        <div className={`rounded-xl px-4 py-3 mb-4 flex items-center gap-3 ${
-          ride.status === 'ACCEPTED'
-            ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-            : 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800'
-        }`}>
-          <div className={`w-2 h-2 rounded-full animate-pulse ${
-            ride.status === 'ACCEPTED' ? 'bg-blue-500' : 'bg-purple-500'
-          }`}></div>
-          <p className={`text-sm font-medium ${
-            ride.status === 'ACCEPTED'
-              ? 'text-blue-700 dark:text-blue-400'
-              : 'text-purple-700 dark:text-purple-400'
-          }`}>
-            {ride.status === 'ACCEPTED'
-              ? 'Driver accepted! On the way to pickup 🚗'
-              : 'Ride in progress... Enjoy your journey! 🎉'
-            }
+      {ride.status === 'ACCEPTED' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse flex-shrink-0"></div>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+            Driver is on the way! 🚗
           </p>
         </div>
       )}
 
-      <RideMap
-        pickupLat={ride.pickupLat} pickupLng={ride.pickupLng}
-        dropoffLat={ride.dropoffLat} dropoffLng={ride.dropoffLng}
-        pickupAddress={ride.pickupAddress} dropoffAddress={ride.dropoffAddress}
+      {ride.status === 'IN_PROGRESS' && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse flex-shrink-0"></div>
+          <p className="text-sm font-medium text-purple-700 dark:text-purple-400">
+            Ride in progress 🎉
+          </p>
+        </div>
+      )}
+
+      <LiveMap
+        pickupLat={ride.pickupLat}
+        pickupLng={ride.pickupLng}
+        dropoffLat={ride.dropoffLat}
+        dropoffLng={ride.dropoffLng}
+        pickupAddress={ride.pickupAddress}
+        dropoffAddress={ride.dropoffAddress}
+        driverId={isActive ? driverId : null}
+        rideStatus={ride.status}
+        showNearby={ride.status === 'REQUESTED'}
+        height="240px"
       />
 
       <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
@@ -375,13 +395,17 @@ function RideCard({ ride, payment, onCancel, onPay }) {
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
           <div className="text-xs text-slate-400 mb-1">Requested</div>
           <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {ride.requestedAt ? new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+            {ride.requestedAt
+              ? new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '—'}
           </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
           <div className="text-xs text-slate-400 mb-1">Completed</div>
           <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {ride.completedAt ? new Date(ride.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+            {ride.completedAt
+              ? new Date(ride.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '—'}
           </div>
         </div>
       </div>

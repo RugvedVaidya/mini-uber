@@ -12,4 +12,12 @@ public class DriverLocation {
     private Double latitude;
     private Double longitude;
     private Long timestamp;
+    private Double distanceKm;
+
+    public DriverLocation(String driverId, Double latitude, Double longitude, Long timestamp) {
+        this.driverId = driverId;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.timestamp = timestamp;
+    }
 }
